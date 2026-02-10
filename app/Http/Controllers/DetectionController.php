@@ -3,56 +3,47 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\DiseaseDetection; // ✅ Đã có Model của bạn
+use App\Models\DiseaseDetection; // Import Model
 use Illuminate\Support\Facades\Storage;
 
 class DetectionController extends Controller
 {
-    // API 1: Upload ảnh (Python gọi bước 1)
     public function upload(Request $request)
     {
+        // 1. Kiểm tra xem có ảnh không
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('uploads', 'public');
-            // Trả về link đầy đủ để Python lấy gửi lại ở bước 2
-            return response()->json([
-                'success' => true,
-                'url' => url("storage/$path")
-            ]);
+
+            try {
+                // --- BƯỚC A: LƯU ẢNH VÀO Ổ CỨNG ---
+                $path = $request->file('image')->store('uploads', 'public');
+                $fullUrl = url("storage/$path");
+
+                // --- BƯỚC B: LƯU THÔNG TIN VÀO DATABASE NGAY LẬP TỨC ---
+                $detection = DiseaseDetection::create([
+                    'farm_id'      => $request->input('farm_id', 1), // Mặc định là Farm số 1
+                    'image_url'    => $fullUrl,                      // Link ảnh vừa tạo
+                    'disease_name' => $request->input('disease_name', 'Chưa xác định'),
+                    'confidence'   => $request->input('confidence', 0),
+                    'detected_at'  => now(),                         // Thời gian hiện tại
+                    'temperature'  => $request->input('temperature', null),
+                    'humidity'     => $request->input('humidity', null),
+                ]);
+
+                // --- BƯỚC C: TRẢ KẾT QUẢ ---
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã lưu ảnh và ghi vào Database thành công!',
+                    'data'    => $detection
+                ]);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lỗi khi lưu DB: ' . $e->getMessage()
+                ], 500);
+            }
         }
-        return response()->json(['error' => 'No file uploaded'], 400);
-    }
 
-    // API 2: Lưu dữ liệu (Python gọi bước 2)
-    public function storeDetection(Request $request)
-    {
-        try {
-            // Lấy dữ liệu Python gửi lên
-            $data = $request->validate([
-                'farm_id' => 'required|integer',
-                'image_url' => 'required|string',
-                'disease_name' => 'required|string',
-                'confidence' => 'required|numeric',
-            ]);
-
-            // ✅ Dùng Model DiseaseDetection của bạn để lưu
-            $detection = DiseaseDetection::create([
-                'farm_id' => $data['farm_id'],
-                'image_url' => $data['image_url'],
-                'disease_name' => $data['disease_name'],
-                'confidence' => $data['confidence'],
-                'detected_at' => now(), // Thời gian hiện tại
-                // temperature và humidity để null hoặc nhận từ request nếu có
-                'temperature' => $request->input('temperature', null),
-                'humidity' => $request->input('humidity', null),
-            ]);
-
-            return response()->json([
-                'message' => 'Lưu thành công!',
-                'data' => $detection
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json(['error' => 'Không tìm thấy file ảnh'], 400);
     }
 }
