@@ -24,29 +24,38 @@ Route::post('/ask-ai', [ChatbotController::class, 'askGemini'])->name('ask.ai');
 Route::post('/clear-chat', [ChatbotController::class, 'clearHistory'])->name('clear.chat');
 
 // --- MẸO: Route đặc biệt để chạy lệnh mà không cần Shell ---
-Route::get('/setup-render', function() {
+// --- FILE: routes/web.php ---
+
+Route::get('/fix-image', function () {
+    $target = storage_path('app/public');
+    $link = public_path('storage');
+
+    echo "<h1>🛠️ CÔNG CỤ SỬA LỖI ẢNH</h1>";
+
+    // 1. Xóa link cũ nếu có (để tạo lại cho sạch)
+    if (file_exists($link)) {
+        unlink($link);
+        echo "<p style='color:orange'>Da xoa link cu...</p>";
+    }
+
+    // 2. Chạy lệnh storage:link bằng code
     try {
-        echo "<h1>BẮT ĐẦU CÀI ĐẶT...</h1>";
-
-        // 1. Chạy Migration (Tạo bảng Database)
-        \Artisan::call('migrate --force');
-        echo "<h3 style='color:green'>1. Migration (Tạo bảng): OK</h3>";
-        echo "<pre>" . \Artisan::output() . "</pre>";
-
-        // 2. Tạo shortcut cho ảnh
-        \Artisan::call('storage:link');
-        echo "<h3 style='color:green'>2. Storage Link (Sửa lỗi ảnh): OK</h3>";
-        echo "<pre>" . \Artisan::output() . "</pre>";
-
-        // 3. Xóa cache cũ
-        \Artisan::call('config:clear');
-        \Artisan::call('cache:clear');
-        echo "<h3 style='color:green'>3. Clear Cache: OK</h3>";
-
-        echo "<h1 style='color:blue'>✅ CÀI ĐẶT THÀNH CÔNG! HÃY VỀ TRANG CHỦ.</h1>";
-
+        symlink($target, $link);
+        echo "<h3 style='color:green'>✅ Đã tạo Symlink thành công!</h3>";
     } catch (\Exception $e) {
-        echo "<h1 style='color:red'>❌ LỖI RỒI:</h1>";
-        echo "<pre>" . $e->getMessage() . "</pre>";
+        echo "<h3 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h3>";
+    }
+
+    // 3. Kiểm tra xem trong ổ cứng có ảnh nào không
+    $files = glob(storage_path('app/public/uploads/*'));
+    echo "<h3>📂 Danh sách file trong kho (Storage):</h3>";
+    if (count($files) > 0) {
+        echo "<ul>";
+        foreach ($files as $file) {
+            echo "<li>" . basename($file) . "</li>";
+        }
+        echo "</ul>";
+    } else {
+        echo "<p style='color:red'>⚠️ Kho đang trống! Chưa có ảnh nào được gửi lên.</p>";
     }
 });
