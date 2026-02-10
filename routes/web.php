@@ -27,35 +27,44 @@ Route::post('/clear-chat', [ChatbotController::class, 'clearHistory'])->name('cl
 // --- FILE: routes/web.php ---
 
 Route::get('/fix-image', function () {
-    $target = storage_path('app/public');
-    $link = public_path('storage');
+    // $link = public_path('storage'); // Bỏ dòng này
 
-    echo "<h1>🛠️ CÔNG CỤ SỬA LỖI ẢNH</h1>";
+    echo "<h1>🛠️ KIỂM TRA ẢNH TRONG KHO</h1>";
 
-    // 1. Xóa link cũ nếu có (để tạo lại cho sạch)
-    if (file_exists($link)) {
-        unlink($link);
-        echo "<p style='color:orange'>Da xoa link cu...</p>";
+    // 1. BỎ QUA BƯỚC XÓA LINK (Vì đã có sẵn và không xóa được)
+    // if (file_exists($link)) { unlink($link); } <--- XÓA DÒNG NÀY ĐI
+
+    // 2. BỎ QUA BƯỚC TẠO LINK (Vì Docker đã tự tạo lúc khởi động rồi)
+
+    // 3. CHỈ CẦN KIỂM TRA FILE THÔI
+    $path = storage_path('app/public/uploads');
+
+    if (!is_dir($path)) {
+        echo "<h3 style='color:red'>❌ Thư mục uploads chưa được tạo!</h3>";
+        // Thử tạo thư mục nếu chưa có
+        mkdir($path, 0775, true);
+        echo "<p>Đã thử tạo thư mục mới...</p>";
+    } else {
+        echo "<h3 style='color:green'>✅ Thư mục uploads ĐÃ TỒN TẠI.</h3>";
     }
 
-    // 2. Chạy lệnh storage:link bằng code
-    try {
-        symlink($target, $link);
-        echo "<h3 style='color:green'>✅ Đã tạo Symlink thành công!</h3>";
-    } catch (\Exception $e) {
-        echo "<h3 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h3>";
-    }
+    // Liệt kê file
+    $files = glob($path . '/*');
+    echo "<h3>📂 Danh sách file ảnh hiện có:</h3>";
 
-    // 3. Kiểm tra xem trong ổ cứng có ảnh nào không
-    $files = glob(storage_path('app/public/uploads/*'));
-    echo "<h3>📂 Danh sách file trong kho (Storage):</h3>";
     if (count($files) > 0) {
         echo "<ul>";
         foreach ($files as $file) {
-            echo "<li>" . basename($file) . "</li>";
+            $filename = basename($file);
+            $url = asset('storage/uploads/' . $filename);
+            echo "<li>";
+            echo "<strong>File:</strong> $filename <br>";
+            echo "<strong>Link xem thử:</strong> <a href='$url' target='_blank'>$url</a>";
+            echo "</li>";
         }
         echo "</ul>";
     } else {
-        echo "<p style='color:red'>⚠️ Kho đang trống! Chưa có ảnh nào được gửi lên.</p>";
+        echo "<p style='color:red'>⚠️ Kho đang trống! (Do Render Free tự xóa hoặc Python chưa gửi lên)</p>";
+        echo "<p>👉 Hãy chạy lại file Python để gửi ảnh mới ngay lập tức!</p>";
     }
 });
