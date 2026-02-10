@@ -19,5 +19,8 @@ Route::post('/ai-detect', [AIWebhookController::class, 'store']);
 Route::post('/sensors/store', [SensorController::class, 'store']);
 // API chuyên để nhận file ảnh từ Python/ESP32
 Route::post('/upload', [ImageUploadController::class, 'upload']);
+
 // Đường dẫn dành riêng cho Python/IoT (Không cần CSRF Token)
 Route::post('/upload-image', [DetectionController::class, 'upload']);
+// Khớp với biến API_DETECT trong Python
+Route::post('/ai-detect', [DetectionController::class, 'storeDetection']);
