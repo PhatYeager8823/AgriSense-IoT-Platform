@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\MonitoringController;
@@ -69,23 +70,23 @@ Route::get('/fix-image', function () {
     }
 });
 
-// Đường dẫn đặc biệt để tạo dữ liệu Farm số 1
-Route::get('/seed-farm-fix', function () {
+// Đường dẫn tạo Farm chuẩn theo DB của bạn
+Route::get('/seed-farm-final', function () {
     try {
-        // Kiểm tra xem đã có Farm số 1 chưa
+        // 1. Kiểm tra xem Farm số 1 có chưa
         $exists = DB::table('farms')->where('id', 1)->exists();
 
         if ($exists) {
-            return "<h1 style='color:orange'>⚠️ Farm ID=1 đã tồn tại rồi! Không cần tạo lại.</h1>";
+            return "<h1 style='color:orange'>⚠️ Farm số 1 đã có rồi! Không cần tạo lại.</h1>";
         }
 
-        // Nếu chưa có thì tạo mới
-        // (Lưu ý: Bạn kiểm tra xem bảng 'farms' trong DB của bạn tên cột là 'address' hay 'location' nhé)
+        // 2. Tạo mới với đúng tên cột trong Database của bạn
         DB::table('farms')->insert([
             'id' => 1,
-            'name' => 'Farm Demo AgriSense',
-            'address' => 'HCMC, Vietnam', // Nếu lỗi cột 'address', hãy đổi thành 'location'
-            // 'user_id' => 1,            // Bỏ dấu // ở đầu dòng này nếu bảng farms yêu cầu người dùng
+            'name' => 'Hợp tác xã Dola Pharmacy',   // Tên Farm
+            'owner_name' => 'Admin',                // 🔥 BẮT BUỘC PHẢI CÓ
+            'location' => 'Bạc Liêu, Việt Nam',     // Cột này tên là location
+            'crop_type' => 'Cà chua',               // Loại cây
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -93,6 +94,7 @@ Route::get('/seed-farm-fix', function () {
         return "<h1 style='color:green'>✅ ĐÃ TẠO THÀNH CÔNG FARM SỐ 1!</h1>";
 
     } catch (\Exception $e) {
+        // Nếu lỗi, in chi tiết ra để sửa
         return "<h1 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h1>";
     }
 });
