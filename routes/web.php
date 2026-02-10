@@ -68,3 +68,31 @@ Route::get('/fix-image', function () {
         echo "<p>👉 Hãy chạy lại file Python để gửi ảnh mới ngay lập tức!</p>";
     }
 });
+
+// Đường dẫn đặc biệt để tạo dữ liệu Farm số 1
+Route::get('/seed-farm-fix', function () {
+    try {
+        // Kiểm tra xem đã có Farm số 1 chưa
+        $exists = DB::table('farms')->where('id', 1)->exists();
+
+        if ($exists) {
+            return "<h1 style='color:orange'>⚠️ Farm ID=1 đã tồn tại rồi! Không cần tạo lại.</h1>";
+        }
+
+        // Nếu chưa có thì tạo mới
+        // (Lưu ý: Bạn kiểm tra xem bảng 'farms' trong DB của bạn tên cột là 'address' hay 'location' nhé)
+        DB::table('farms')->insert([
+            'id' => 1,
+            'name' => 'Farm Demo AgriSense',
+            'address' => 'HCMC, Vietnam', // Nếu lỗi cột 'address', hãy đổi thành 'location'
+            // 'user_id' => 1,            // Bỏ dấu // ở đầu dòng này nếu bảng farms yêu cầu người dùng
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return "<h1 style='color:green'>✅ ĐÃ TẠO THÀNH CÔNG FARM SỐ 1!</h1>";
+
+    } catch (\Exception $e) {
+        return "<h1 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h1>";
+    }
+});
