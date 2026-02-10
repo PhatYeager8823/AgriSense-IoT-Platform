@@ -9,25 +9,23 @@ class DetectionController extends Controller
 {
     public function upload(Request $request)
     {
-        // 1. Kiểm tra xem Python có gửi file tên là 'image' không
         if ($request->hasFile('image')) {
-
-            // 2. Lưu ảnh vào thư mục 'storage/app/public/uploads'
-            // Nó sẽ tự sinh ra cái tên ngẫu nhiên (vd: h3n4k5...jpg) để không bị trùng
+            // 1. Lưu ảnh
             $path = $request->file('image')->store('uploads', 'public');
 
-            // 3. Trả về kết quả cho Python (kèm link ảnh)
+            // 2. Lấy tên bệnh gửi kèm (nếu có)
+            $disease = $request->input('disease_name', 'Không rõ');
+            $conf = $request->input('confidence', 0);
+
+            // TODO: Tại đây bạn có thể viết code lưu vào bảng 'detections' trong Database
+            // Detection::create([...]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Nhận ảnh thành công!',
-                'url' => url("storage/$path") // Link ảnh để xem
+                'url' => url("storage/$path"),
+                'note' => "Đã nhận ảnh bệnh: $disease"
             ]);
         }
-
-        // 4. Nếu không có ảnh thì báo lỗi
-        return response()->json([
-            'success' => false,
-            'message' => 'Lỗi: Không tìm thấy file ảnh nào!'
-        ], 400);
+        return response()->json(['error' => 'No file'], 400);
     }
 }
