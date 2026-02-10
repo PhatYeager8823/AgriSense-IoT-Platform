@@ -40,7 +40,7 @@ RUN a2enmod rewrite
 
 # 11. Copy file cấu hình chạy khi khởi động (Thêm đoạn này)
 # Tự động chạy lệnh Clear Cache và Storage Link mỗi khi Server bật lên
-CMD bash -c "php artisan optimize:clear && php artisan storage:link && apache2-foreground"
+CMD bash -c "php artisan migrate --force && php artisan optimize:clear && php artisan storage:link && apache2-foreground"
 
 # 11. Mở cổng 80
 EXPOSE 80
