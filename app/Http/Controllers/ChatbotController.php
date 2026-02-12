@@ -69,7 +69,7 @@ class ChatbotController extends Controller
         $apiKey = $availableKeys[array_rand($availableKeys)];
 
         // Model Gemini (Dùng bản Pro cho ổn định, hoặc Flash nếu muốn nhanh)
-        $model = 'gemini-1.5-flash';
+        $model = 'gemini-2.5-flash';
 
         $diseaseName = $request->input('disease');
         $userQuestion = $request->input('question');
