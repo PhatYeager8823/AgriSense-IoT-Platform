@@ -222,16 +222,14 @@
     <script>
     // 1. LẤY DỮ LIỆU TỪ LARAVEL (Đã được Python gửi lên DB)
     // Lấy dòng dữ liệu mới nhất
+    // Code cũ của bạn có thể gây lỗi nếu DB trống. Hãy thay bằng đoạn này:
     var latestData = {
-        temp: {{ $sensorData->first()->temperature ?? 0 }},
-        humid: {{ $sensorData->first()->humidity ?? 0 }},
-        soil: {{ $sensorData->first()->soil_moisture ?? 0 }}, // Thêm độ ẩm đất
-
-        // Lấy trạng thái thiết bị từ DB (Lưu ý: Bạn cần chắc chắn bảng sensor_logs đã có các cột này)
-        // Nếu bảng chưa có cột pump_status thì tạm thời mình dựa vào logic để hiển thị
-        pump: {{ $sensorData->first()->pump_status ?? 0 }},
-        fan: {{ $sensorData->first()->fan_status ?? 0 }},
-        heater: {{ $sensorData->first()->heater_status ?? 0 }}
+        temp: {{ $currentStatus['temperature'] }},
+        humid: {{ $currentStatus['humidity'] }},
+        soil: {{ $currentStatus['soil_moisture'] }},
+        pump: {{ $currentStatus['pump_status'] }},
+        fan: {{ $currentStatus['fan_status'] }},
+        heater: {{ $currentStatus['heater_status'] }}
     };
 
     $(document).ready(function() {

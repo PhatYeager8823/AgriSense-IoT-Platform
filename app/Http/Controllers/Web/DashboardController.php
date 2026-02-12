@@ -11,18 +11,31 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. LẤY DỮ LIỆU CẢM BIẾN (Từ bảng sensor_logs)
-        // Lấy 24 dòng mới nhất (tương đương 12 tiếng nếu 30p/lần) để vẽ biểu đồ Đường
+        // 1. LẤY DỮ LIỆU CẢM BIẾN
         $sensorData = SensorLog::orderBy('recorded_at', 'desc')->take(24)->get();
 
-        // Lấy thông số mới nhất để hiển thị lên Thẻ (Card)
+        // Lấy dòng mới nhất (Có thể bị null nếu DB trống)
         $latestSensor = $sensorData->first();
 
-        // 2. LẤY DỮ LIỆU BỆNH (Từ bảng disease_detections)
-        // Lấy tất cả để đếm số lượng và vẽ biểu đồ Tròn
+        // 🔥 SỬA LỖI MA TRƠI (GHOST STATE) TẠI ĐÂY:
+        // Tạo một biến chuẩn hóa, nếu $latestSensor là null thì gán bằng 0 hết
+        $currentStatus = [
+            'temperature'   => $latestSensor ? $latestSensor->temperature : 0,
+            'humidity'      => $latestSensor ? $latestSensor->humidity : 0,
+            'soil_moisture' => $latestSensor ? $latestSensor->soil_moisture : 0,
+
+            // Quan trọng nhất: Thiết bị phải là 0 (TẮT)
+            'pump_status'   => $latestSensor ? $latestSensor->pump_status : 0,
+            'fan_status'    => $latestSensor ? $latestSensor->fan_status : 0,
+            'heater_status' => $latestSensor ? $latestSensor->heater_status : 0,
+
+            'recorded_at'   => $latestSensor ? $latestSensor->recorded_at : null,
+        ];
+
+        // 2. LẤY DỮ LIỆU BỆNH
         $detections = DiseaseDetection::all();
 
-        // 3. Trả cả 2 biến về cho View
-        return view('dashboard.index', compact('sensorData', 'latestSensor', 'detections'));
+        // 3. Trả về View (Lưu ý: mình truyền thêm biến $currentStatus)
+        return view('dashboard.index', compact('sensorData', 'latestSensor', 'detections', 'currentStatus'));
     }
 }
