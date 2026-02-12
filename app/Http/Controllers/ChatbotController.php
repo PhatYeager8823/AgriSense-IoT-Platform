@@ -49,15 +49,22 @@ class ChatbotController extends Controller
     public function askGemini(Request $request)
     {
         $apiKeys = [
-            'AIzaSyA_uye2qbaKhO0KtSU6ySrNmUm3oQMBlrM', // Key 1
-            'AIzaSyDyBepSnABaAv08aQqaLGlHPPp8bhiEgfc', // Key 2
-            'AIzaSyBxGuBCV0tjVIr7f1vAbmWgNEi1srQf50c', // Key 3
-            'AIzaSyA85EtVlta5o2KDkQrOKsEIZKug1y8D4_o', // Key 4
-            'AIzaSyAkdlmCHOto3wkT98bKjSYnc-6A6NrfJP0', // Key 5
+            env('GEMINI_KEY_1'),
+            env('GEMINI_KEY_2'),
+            env('GEMINI_KEY_3'),
+            env('GEMINI_KEY_4'),
+            env('GEMINI_KEY_5'),
         ];
 
-        // Lệnh này sẽ bốc bừa 1 key trong đống trên để dùng
-        $apiKey = $apiKeys[array_rand($apiKeys)];
+        // 2. Lọc bỏ những key rỗng (đề phòng bạn chưa nhập đủ 5 cái)
+        $availableKeys = array_filter($allKeys);
+
+        if (empty($availableKeys)) {
+            return response()->json(['error' => 'Chưa cấu hình API Key nào cả!'], 500);
+        }
+
+        // 3. Chọn ngẫu nhiên 1 key trong danh sách để dùng cho lượt này
+        $apiKey = $availableKeys[array_rand($availableKeys)];
         $model = 'gemini-2.5-flash';
 
         $diseaseName = $request->input('disease');
