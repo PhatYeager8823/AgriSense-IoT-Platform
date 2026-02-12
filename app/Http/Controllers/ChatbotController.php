@@ -49,11 +49,11 @@ class ChatbotController extends Controller
     public function askGemini(Request $request)
     {
         $apiKeys = [
-            env('GEMINI_KEY_1'),
-            env('GEMINI_KEY_2'),
-            env('GEMINI_KEY_3'),
-            env('GEMINI_KEY_4'),
-            env('GEMINI_KEY_5'),
+            env('GEMINI_API_KEY_1'),
+            env('GEMINI_API_KEY_2'),
+            env('GEMINI_API_KEY_3'),
+            env('GEMINI_API_KEY_4'),
+            env('GEMINI_API_KEY_5'),
         ];
 
         // 2. Lọc bỏ những key rỗng (đề phòng bạn chưa nhập đủ 5 cái)
