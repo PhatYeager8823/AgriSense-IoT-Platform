@@ -98,3 +98,20 @@ Route::get('/seed-farm-final', function () {
         return "<h1 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h1>";
     }
 });
+
+// Đường dẫn bí mật để xóa sạch dữ liệu bệnh
+Route::get('/reset-data', function () {
+    try {
+        // Xóa toàn bộ dữ liệu trong bảng disease_detections
+        DB::table('disease_detections')->delete();
+
+        // (Tùy chọn) Reset lại bộ đếm ID về 1
+        // DB::statement('ALTER TABLE disease_detections AUTO_INCREMENT = 1;');
+
+        return "<h1 style='color:green'>✅ ĐÃ DỌN DẸP SẠCH SẼ! DATABASE TRỐNG TRƠN.</h1>
+                <p>Giờ bạn hãy quay lại Dashboard, nó sẽ trắng tinh.</p>
+                <p>Sau đó chạy Python để nạp dữ liệu mới nhé!</p>";
+    } catch (\Exception $e) {
+        return "<h1 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h1>";
+    }
+});
