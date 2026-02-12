@@ -99,18 +99,25 @@ Route::get('/seed-farm-final', function () {
     }
 });
 
-// Đường dẫn bí mật để xóa sạch dữ liệu bệnh
-Route::get('/reset-data', function () {
+// Link Reset toàn bộ hệ thống để Demo
+Route::get('/reset-all', function () {
     try {
-        // Xóa toàn bộ dữ liệu trong bảng disease_detections
+        // 1. Xóa cảm biến
+        DB::table('sensor_logs')->delete();
+
+        // 2. Xóa lịch sử bệnh (Ảnh AI)
         DB::table('disease_detections')->delete();
 
-        // (Tùy chọn) Reset lại bộ đếm ID về 1
-        // DB::statement('ALTER TABLE disease_detections AUTO_INCREMENT = 1;');
+        // 3. Xóa lịch sử Chatbot
+        DB::table('chat_histories')->delete();
 
-        return "<h1 style='color:green'>✅ ĐÃ DỌN DẸP SẠCH SẼ! DATABASE TRỐNG TRƠN.</h1>
-                <p>Giờ bạn hãy quay lại Dashboard, nó sẽ trắng tinh.</p>
-                <p>Sau đó chạy Python để nạp dữ liệu mới nhé!</p>";
+        return "<div style='text-align:center; font-family:sans-serif; padding-top:50px;'>
+                    <h1 style='color:green; font-size:40px;'>✨ HỆ THỐNG ĐÃ SẠCH SẼ! ✨</h1>
+                    <h3>Sẵn sàng để Demo.</h3>
+                    <p>1. Bật Python <b>simulate_sensors.py</b> (Gửi cảm biến)</p>
+                    <p>2. Bật Python <b>detector.py</b> (Gửi ảnh bệnh)</p>
+                    <p>3. F5 trang Dashboard và lượm điểm 10! 🏆</p>
+                </div>";
     } catch (\Exception $e) {
         return "<h1 style='color:red'>❌ Lỗi: " . $e->getMessage() . "</h1>";
     }
