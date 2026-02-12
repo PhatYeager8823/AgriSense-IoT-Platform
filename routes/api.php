@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AIWebhookController;
 use App\Http\Controllers\Api\SensorController;
-use App\Http\Controllers\Api\ImageUploadController; // Nhớ dòng này
+// use App\Http\Controllers\Api\ImageUploadController; 
 use App\Http\Controllers\DetectionController; // Nhớ đổi đúng tên Controller của bạn
 
 // --- ĐOẠN MẶC ĐỊNH (Cứ để đây, sau này lỡ cần dùng API login thì tính sau) ---

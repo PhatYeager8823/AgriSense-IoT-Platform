@@ -82,7 +82,7 @@
                                             <small>Trạng thái: <span id="fanStatus" class="text-success font-weight-bold">Đang bật</span></small>
                                         </div>
                                         <div class="custom-control custom-switch custom-switch-lg">
-                                            <input type="checkbox" class="custom-control-input" id="switchFan" checked onchange="toggleDevice('fan')">
+                                            <input type="checkbox" class="custom-control-input" id="switchFan" onchange="toggleDevice('fan')">
                                             <label class="custom-control-label" for="switchFan"></label>
                                         </div>
                                     </div>
