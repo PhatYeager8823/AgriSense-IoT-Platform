@@ -19,19 +19,18 @@ class ChatbotController extends Controller
 
     public function index()
     {
-        // 1. Lấy TẤT CẢ các loại bệnh từng phát hiện (Bỏ Carbon::today())
+        // 1. Lấy TẤT CẢ các loại bệnh từng phát hiện
         $rawDiseases = DB::table('disease_detections')
             ->select(
                 'disease_name',
-                DB::raw('MAX(image_url) as image_url'),       // Lấy ảnh đại diện mới nhất
-                DB::raw('COUNT(*) as total_count'),           // Đếm tổng số lần bị
-                DB::raw('MAX(detected_at) as last_detected')  // Lấy thời gian phát hiện gần nhất
+                DB::raw('MAX(image_url) as image_url'),
+                DB::raw('COUNT(*) as total_count'),
+                DB::raw('MAX(detected_at) as last_detected')
             )
             ->where('disease_name', '!=', 'Healthy')
             ->where('disease_name', '!=', 'Cây Khỏe Mạnh')
-            // ->whereDate('detected_at', Carbon::today()) // <--- ĐÃ XÓA DÒNG NÀY ĐỂ KHÔNG BỊ MẤT BỆNH CŨ
             ->groupBy('disease_name')
-            ->orderBy('last_detected', 'desc') // Sắp xếp: Bệnh nào mới gặp thì lên đầu
+            ->orderBy('last_detected', 'desc')
             ->get();
 
         // 2. Dịch sang tiếng Việt
@@ -48,6 +47,9 @@ class ChatbotController extends Controller
 
     public function askGemini(Request $request)
     {
+        // --- 1. KHAI BÁO DANH SÁCH KEY ---
+        // Lưu ý: Đảm bảo trên Render bạn đặt tên biến là GEMINI_API_KEY_1, ..._2 (chứ không phải GEMINI_KEY_1)
+        // Nếu trên Render đặt là GEMINI_KEY_1 thì sửa code dưới này lại cho khớp nhé.
         $apiKeys = [
             env('GEMINI_API_KEY_1'),
             env('GEMINI_API_KEY_2'),
@@ -56,77 +58,75 @@ class ChatbotController extends Controller
             env('GEMINI_API_KEY_5'),
         ];
 
-        // 2. Lọc bỏ những key rỗng (đề phòng bạn chưa nhập đủ 5 cái)
-        $availableKeys = array_filter($allKeys);
+        // --- 2. SỬA LỖI TẠI ĐÂY (Dùng đúng biến $apiKeys) ---
+        $availableKeys = array_filter($apiKeys); // Lọc bỏ key rỗng
 
         if (empty($availableKeys)) {
-            return response()->json(['error' => 'Chưa cấu hình API Key nào cả!'], 500);
+            return response()->json(['answer' => 'Lỗi Server: Chưa cấu hình API Key nào trong Environment Variables!'], 500);
         }
 
-        // 3. Chọn ngẫu nhiên 1 key trong danh sách để dùng cho lượt này
+        // --- 3. CHỌN NGẪU NHIÊN KEY ---
         $apiKey = $availableKeys[array_rand($availableKeys)];
-        $model = 'gemini-2.5-flash';
+
+        // Model Gemini (Dùng bản Pro cho ổn định, hoặc Flash nếu muốn nhanh)
+        $model = 'gemini-1.5-flash';
 
         $diseaseName = $request->input('disease');
         $userQuestion = $request->input('question');
         $contextDisease = $request->input('context');
 
         $finalUserMessage = "";
+        $prompt = "";
 
         // --- XỬ LÝ PROMPT ---
         if ($diseaseName) {
-            // Thêm chữ "Cây trồng/Nông nghiệp" thật rõ để AI không hiểu nhầm là bệnh người
-            $prompt = "Cây cà chua nông nghiệp bị bệnh: '$diseaseName'.
-            Đóng vai kỹ sư nông nghiệp, trả lời ngắn gọn 3 ý:
-            1. Nguyên nhân? 2. Dấu hiệu? 3. Cách trị (ưu tiên sinh học)?
-            Trả lời tiếng Việt, gạch đầu dòng.";
+            $prompt = "Bạn là kỹ sư nông nghiệp chuyên về cây cà chua. Cây đang bị bệnh: '$diseaseName'.
+            Hãy tư vấn ngắn gọn 3 ý chính:
+            1. Nguyên nhân?
+            2. Dấu hiệu nhận biết?
+            3. Cách điều trị (ưu tiên biện pháp sinh học)?
+            Trả lời bằng tiếng Việt, trình bày gạch đầu dòng dễ đọc.";
 
             $finalUserMessage = "Tư vấn giúp tôi về bệnh: " . $diseaseName;
             $contextDisease = $diseaseName;
         }
         elseif ($userQuestion && $contextDisease) {
-            $prompt = "Bạn là kỹ sư nông nghiệp. Người dùng đang hỏi về bệnh cây trồng: '$contextDisease'.
-            Câu hỏi: '$userQuestion'. Hãy trả lời dựa trên ngữ cảnh bệnh '$contextDisease'.";
+            $prompt = "Bạn là kỹ sư nông nghiệp. Đang nói về bệnh cây: '$contextDisease'.
+            Người dùng hỏi thêm: '$userQuestion'. Hãy trả lời ngắn gọn, tập trung vào ngữ cảnh bệnh này.";
             $finalUserMessage = $userQuestion;
         }
         else {
-            $prompt = "Bạn là Trợ lý Nông nghiệp AgriSense. Người dùng hỏi: '$userQuestion'. Hãy trả lời ngắn gọn.";
+            $prompt = "Bạn là Trợ lý Nông nghiệp AgriSense. Người dùng hỏi: '$userQuestion'. Hãy trả lời ngắn gọn, thân thiện.";
             $finalUserMessage = $userQuestion;
         }
 
         try {
+            // Gửi request đến Google AI
             $response = Http::withoutVerifying()->withHeaders([
                 'Content-Type' => 'application/json',
             ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                 'contents' => [[ 'parts' => [['text' => $prompt]] ]],
-
-                // --- CẤU HÌNH MỚI: TẮT BỘ LỌC AN TOÀN ---
                 'safetySettings' => [
                     ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => 'BLOCK_NONE'],
                     ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => 'BLOCK_NONE'],
                     ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_NONE'],
                     ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_NONE'],
-                ],
-
-                // Giới hạn Token cao để không bị cắt chữ
-                'generationConfig' => [
-                    'temperature' => 0.7,
-                    'maxOutputTokens' => 10000,
                 ]
             ]);
 
             $data = $response->json();
 
-            // Debug lỗi nếu AI chặn câu trả lời
+            // Kiểm tra lỗi phản hồi từ Google
             if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                // Kiểm tra xem có phải do Safety Filter chặn không
-                if (isset($data['promptFeedback'])) {
-                    return response()->json(['answer' => "AI từ chối trả lời vì lý do an toàn (Safety Filter). Vui lòng thử lại câu hỏi cụ thể hơn về cây trồng."]);
+                if (isset($data['error'])) {
+                    return response()->json(['answer' => "Lỗi Google API: " . $data['error']['message']]);
                 }
-                return response()->json(['answer' => "Lỗi AI: Không nhận được phản hồi. Chi tiết: " . json_encode($data)]);
+                return response()->json(['answer' => "AI đang bận, vui lòng thử lại sau giây lát."]);
             }
 
             $rawAnswer = $data['candidates'][0]['content']['parts'][0]['text'];
+
+            // Format lại câu trả lời cho đẹp (Xóa dấu **, xuống dòng)
             $formattedAnswer = nl2br(str_replace('**', '', $rawAnswer));
 
             // Lưu vào DB
@@ -145,10 +145,9 @@ class ChatbotController extends Controller
         }
     }
 
-    // [MỚI] Hàm xóa lịch sử
     public function clearHistory()
     {
-        DB::table('chat_histories')->truncate(); // Xóa sạch bảng
+        DB::table('chat_histories')->truncate();
         return response()->json(['status' => 'success']);
     }
 }
