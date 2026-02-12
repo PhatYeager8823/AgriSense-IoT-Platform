@@ -74,7 +74,7 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Nhiệt độ hiện tại</div>
                                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                {{ $currentStatus->temperature ?? 'N/A' }}°C
+                                                {{ $currentStatus['temperature'] ?? 'N/A' }}°C
                                             </div>
                                         </div>
                                         <div class="col-auto"><i class="fas fa-thermometer-half fa-2x text-gray-300"></i></div>
